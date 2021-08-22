@@ -45,7 +45,7 @@
 
 int _newlib_heap_size_user = MEMORY_NEWLIB_MB * 1024 * 1024;
 int _opensles_user_freq = 32000;
-static so_module ff4_mod;
+static so_module ff4a_mod;
 int has_low_res = 0;
 
 void *__wrap_memcpy(void *dest, const void *src, size_t n) {
@@ -649,9 +649,9 @@ int main_thread(SceSize args, void *argp) {
                   SCE_GXM_MULTISAMPLE_4X);
 
   int (*ff4a_render)(char *) =
-      (void *)so_symbol(&ff4_mod, "render");
-  int (*ff4a_touch)(int, int, int, int, float, float, float, float) = (void *)so_symbol(&ff4_mod, "touch");
-  int (*ff4a_set_viewport)(int, int, GLint, GLint, GLsizei, GLsizei) = (void *)so_symbol(&ff4_mod, "setViewport");
+      (void *)so_symbol(&ff4a_mod, "render");
+  int (*ff4a_touch)(int, int, int, int, float, float, float, float) = (void *)so_symbol(&ff4a_mod, "touch");
+  int (*ff4a_set_viewport)(int, int, GLint, GLint, GLsizei, GLsizei) = (void *)so_symbol(&ff4a_mod, "setViewport");
   
   readHeader();
   ff4a_set_viewport(0, 0, 0, 0, SCREEN_W, SCREEN_H);
@@ -682,7 +682,7 @@ int main_thread(SceSize args, void *argp) {
 
 void patch_game(void) {
 #ifdef DEBUG
-  hook_thumb(ff4_mod.text_base + 0x134fea, (uintptr_t)&printf);
+  hook_thumb(ff4a_mod.text_base + 0x134fea, (uintptr_t)&printf);
 #endif
 }
 
@@ -987,7 +987,7 @@ int file_exists(const char *path) {
 }*/
 
 int main(int argc, char *argv[]) {
-  //sceSysmoduleLoadModule(9);
+  sceSysmoduleLoadModule(9);
   sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT,
                            SCE_TOUCH_SAMPLING_STATE_START);
@@ -1009,17 +1009,17 @@ int main(int argc, char *argv[]) {
 
   InitJNIEnv();
 
-  if (so_load(&ff4_mod, SO_PATH) < 0)
+  if (so_load(&ff4a_mod, SO_PATH) < 0)
     fatal_error("Error could not load %s.", SO_PATH);
 
-  so_relocate(&ff4_mod);
-  so_resolve(&ff4_mod, dynlib_functions,
+  so_relocate(&ff4a_mod);
+  so_resolve(&ff4a_mod, dynlib_functions,
              sizeof(dynlib_functions) / sizeof(DynLibFunction), 1);
 
   patch_game();
-  so_flush_caches(&ff4_mod);
+  so_flush_caches(&ff4a_mod);
 
-  so_initialize(&ff4_mod);
+  so_initialize(&ff4a_mod);
 
   SceUID thid =
       sceKernelCreateThread("main_thread", (SceKernelThreadEntry)main_thread,
