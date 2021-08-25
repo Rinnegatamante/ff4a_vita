@@ -43,6 +43,67 @@
 #include "main.h"
 #include "so_util.h"
 
+int SCREEN_W = DEF_SCREEN_W;
+int SCREEN_H = DEF_SCREEN_H;
+
+config_opts options;
+void loadOptions() {
+  char buffer[30];
+  int value;
+  
+  FILE *f = fopen(CONFIG_FILE_PATH, "rb");
+  if (f) {
+    while (EOF != fscanf(f, "%[^=]=%d\n", buffer, &value)) {
+      if (strcmp("resolution", buffer) == 0) options.res = value;
+      else if (strcmp("bilinear", buffer) == 0) options.bilinear = value;
+      else if (strcmp("language", buffer) == 0) options.lang = value;
+      else if (strcmp("antialiasing", buffer) == 0) options.msaa = value;
+      else if (strcmp("postfx", buffer) == 0) options.postfx = value;
+      else if (strcmp("battle_fps", buffer) == 0) options.battle_fps = value;
+    }
+  } else {
+    options.res = 544;
+    options.bilinear = 0;
+    options.lang = 0;
+    options.msaa = 2;
+    options.postfx = 0;
+    options.battle_fps = 0;
+  }
+  
+  switch (options.res) {
+  case 544:
+    SCREEN_W = 960;
+    SCREEN_H = 544;
+    break;
+  case 720:
+    SCREEN_W = 1280;
+    SCREEN_H = 725;
+    break;
+  case 1080:
+    SCREEN_W = 1080;
+    SCREEN_H = 1088;
+    break;
+  }
+
+  switch (options.battle_fps) {
+  case 1:
+    options.battle_fps = 20;
+    break;
+  case 2:
+    options.battle_fps = 25;
+    break;
+  case 3:
+    options.battle_fps = 30;
+    break;
+  default:
+    break;  
+  }
+
+  if (options.lang > 5) { // Skip unsupported languages
+    options.lang += 3;
+  }
+}
+
 int _newlib_heap_size_user = MEMORY_NEWLIB_MB * 1024 * 1024;
 int _opensles_user_freq = 32000;
 static so_module ff4a_mod;
@@ -143,7 +204,7 @@ int getKeyEvent() {
   if (pad.buttons & SCE_CTRL_CROSS)
     mask |= 0x1;
   if (pad.buttons & SCE_CTRL_CIRCLE)
-    mask |= 0x4000;
+    mask |= 0x2;
   if (pad.buttons & SCE_CTRL_START)
     mask |= 0x8;
   if (pad.buttons & SCE_CTRL_SELECT)
@@ -247,8 +308,6 @@ int GetStaticMethodID(void *env, void *class, const char *name,
 
 int CallBooleanMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
   switch (methodID) {
-  case IS_DEVICE_ANDROID_TV:
-    return isDeviceAndroidTV();
   case IS_OK_ACHIEVEMENT:
     return 1;
   default:
@@ -319,6 +378,8 @@ void CallStaticVoidMethodV(void *env, void *obj, int methodID,
 int CallStaticBooleanMethodV(void *env, void *obj, int methodID,
                              uintptr_t *args) {
   switch (methodID) {
+  case IS_DEVICE_ANDROID_TV:
+    return isDeviceAndroidTV();
   default:
     return 0;
   }
@@ -637,16 +698,92 @@ char *getcwd(char *buf, size_t size) {
   return NULL;
 }
 
+GLuint frag, vert, fb, fb_tex, postfx_prog;
+uint16_t *postfx_indices;
+float *postfx_texcoords, *postfx_vertices;
+
+void loadShader(int is_vertex, char *file) {
+  printf("loading: %s postfx shader\n", file, is_vertex);
+  SceIoStat st;
+  sceIoGetstat(file, &st);
+  char *code = (char*)malloc(st.st_size);
+
+  FILE *f = fopen(file, "rb");
+  fread(code, 1, st.st_size, f);
+  fclose(f);
+
+  GLint len = st.st_size - 1;
+  GLuint shad = is_vertex ? vert : frag;
+  glShaderSource(shad, 1, &code, &len);
+  glCompileShader(shad);
+
+  free(code);
+}
+
+float postfx_pos[8] = {
+  -1.0f, 1.0f,
+  -1.0f, -1.0f,
+   1.0f, 1.0f,
+   1.0f, -1.0f
+};
+
+float postfx_texcoord[8] = {
+  0.0f, 0.0f,
+  0.0f, 1.0f,
+  1.0f, 0.0f,
+  1.0f, 1.0f
+};
+
 int main_thread(SceSize args, void *argp) {
+  initFont();
+
   SceAppUtilInitParam init_param;
   SceAppUtilBootParam boot_param;
   memset(&init_param, 0, sizeof(SceAppUtilInitParam));
   memset(&boot_param, 0, sizeof(SceAppUtilBootParam));
   sceAppUtilInit(&init_param, &boot_param);
 
-  has_low_res = vglInitExtended(0, SCREEN_W * 2, SCREEN_H * 2,
-                  MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024,
-                  SCE_GXM_MULTISAMPLE_4X);
+  switch (options.msaa) {
+  case 0:
+    has_low_res = vglInitExtended(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, SCE_GXM_MULTISAMPLE_NONE);
+    break;
+  case 1:
+    has_low_res = vglInitExtended(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, SCE_GXM_MULTISAMPLE_2X);
+    break;
+  default:
+    has_low_res = vglInitExtended(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, SCE_GXM_MULTISAMPLE_4X);
+    break;
+  }
+  
+  if (options.postfx) {
+    glGenTextures(1, &fb_tex);
+    glBindTexture(GL_TEXTURE_2D, fb_tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_W, SCREEN_H, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glGenFramebuffers(1, &fb);
+    glBindFramebuffer(GL_FRAMEBUFFER, fb);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, fb_tex, 0);
+
+    frag = glCreateShader(GL_FRAGMENT_SHADER);
+    vert = glCreateShader(GL_VERTEX_SHADER);
+    char path[512];
+    SceIoDirent d;
+    SceUID fd = sceIoDopen("ux0:data/ff4/shaders");
+    while (sceIoDread(fd, &d) > 0) {
+      sprintf(path, "%d_", options.postfx);
+      if (strstr(d.d_name, path)) {
+        sprintf(path, "ux0:data/ff4/shaders/%s", d.d_name);
+        loadShader(strncmp(&d.d_name[strlen(d.d_name) - 5], "_f.cg", 5) == 0 ? 0 : 1, path);
+      }
+    }
+    sceIoDclose(fd);
+
+    postfx_prog = glCreateProgram();
+    glAttachShader(postfx_prog, frag);
+    glAttachShader(postfx_prog, vert);
+    glBindAttribLocation(postfx_prog, 0, "position");
+    glBindAttribLocation(postfx_prog, 1, "texcoord");
+    glLinkProgram(postfx_prog);
+  }
 
   int (*ff4a_render)(char *) =
       (void *)so_symbol(&ff4a_mod, "render");
@@ -674,6 +811,18 @@ int main_thread(SceSize args, void *argp) {
               coordinates[2], coordinates[3]);
 
     ff4a_render(fake_env);
+    if (options.postfx) {
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      glBindTexture(GL_TEXTURE_2D, fb_tex);
+      glUseProgram(postfx_prog);
+      glEnableVertexAttribArray(0);
+      glEnableVertexAttribArray(1);
+      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, &postfx_pos[0]);
+      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, &postfx_texcoord[0]);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      glUseProgram(0);
+      glBindFramebuffer(GL_FRAMEBUFFER, fb);
+    }
     vglSwapBuffers(GL_FALSE);
   }
 
@@ -987,7 +1136,20 @@ int file_exists(const char *path) {
 }*/
 
 int main(int argc, char *argv[]) {
-  sceSysmoduleLoadModule(9);
+  // Check if we want to start the companion app
+  sceAppUtilInit(&(SceAppUtilInitParam){}, &(SceAppUtilBootParam){});
+  SceAppUtilAppEventParam eventParam;
+  sceClibMemset(&eventParam, 0, sizeof(SceAppUtilAppEventParam));
+  sceAppUtilReceiveAppEvent(&eventParam);
+  if (eventParam.type == 0x05) {
+    char buffer[2048];
+    sceAppUtilAppEventParseLiveArea(&eventParam, buffer);
+    if (strstr(buffer, "-config"))
+      sceAppMgrLoadExec("app0:/companion.bin", NULL, NULL);
+  }
+
+  loadOptions();
+  //sceSysmoduleLoadModule(9); // Razor Capture
   sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT,
                            SCE_TOUCH_SAMPLING_STATE_START);
@@ -1021,9 +1183,7 @@ int main(int argc, char *argv[]) {
 
   so_initialize(&ff4a_mod);
 
-  SceUID thid =
-      sceKernelCreateThread("main_thread", (SceKernelThreadEntry)main_thread,
-                            0x40, 1024 * 1024, 0, 0, NULL);
+  SceUID thid = sceKernelCreateThread("main_thread", (SceKernelThreadEntry)main_thread, 0x40, 1024 * 1024, 0, 0, NULL);
   sceKernelStartThread(thid, 0, NULL);
   return sceKernelExitDeleteThread(0);
 }

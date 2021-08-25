@@ -5,13 +5,22 @@
 
 #define MEMORY_NEWLIB_MB 280
 #define MEMORY_VITAGL_THRESHOLD_MB 8
-#define AUDIO_SAMPLE_RATE 44100
-#define AUDIO_SAMPLES_PER_BUF 8192
 
 #define DATA_PATH "ux0:data/ff4a"
 #define SO_PATH DATA_PATH "/" "libff4a.so"
+#define CONFIG_FILE_PATH "ux0:data/ff4a/options.cfg"
 
-#define SCREEN_W 960
-#define SCREEN_H 544
+#define DEF_SCREEN_W 960
+#define DEF_SCREEN_H 544
+
+typedef struct {
+  int res;
+  int bilinear;
+  int lang;
+  int msaa;
+  int postfx;
+  int battle_fps; 
+} config_opts;
+extern config_opts options;
 
 #endif

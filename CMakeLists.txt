@@ -8,17 +8,17 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   endif()
 endif()
 
-project(ff4a.elf C CXX)
+project(FF4AY.elf C CXX)
 include("${VITASDK}/share/vita.cmake" REQUIRED)
-set(VITA_APP_NAME "Final Fantasy 3")
+set(VITA_APP_NAME "Final Fantasy IV: After Years")
 set(VITA_TITLEID  "FF4AY0000")
 set(VITA_VERSION  "01.00")
 set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Wl,-q,--wrap,memcpy,--wrap,memmove,--wrap,memset -Wall -O3 -mfloat-abi=softfp")
-set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11 -Wno-write-strings")
 
-add_executable(ff4a.elf
+add_executable(FF4AY.elf
   loader/main.c
   loader/dialog.c
   loader/so_util.c
@@ -27,7 +27,9 @@ add_executable(ff4a.elf
   loader/stb_truetype.c
 )
 
-target_link_libraries(ff4a.elf
+add_dependencies(FF4AY.elf companion.bin)
+
+target_link_libraries(FF4AY.elf
   m
   stdc++
   vitaGL
@@ -57,26 +59,38 @@ target_link_libraries(ff4a.elf
   -Wl,--no-whole-archive
 )
 
-vita_create_self(eboot.bin ff4a.elf UNSAFE)
-vita_create_vpk(ff4ay.vpk ${VITA_TITLEID} eboot.bin
+add_executable(companion
+  companion/main.cpp
+)
+
+target_link_libraries(companion
+  imgui
+  vitaGL
+  vitashark
+  mathneon
+  SceAppMgr_stub
+  SceAudio_stub
+  SceCtrl_stub
+  SceCommonDialog_stub
+  SceDisplay_stub
+  SceKernelDmacMgr_stub
+  SceGxm_stub
+  SceShaccCg_stub
+  SceSysmodule_stub
+  SceTouch_stub
+)
+
+vita_create_self(companion.bin companion UNSAFE)
+
+vita_create_self(eboot.bin FF4AY.elf UNSAFE)
+vita_create_vpk(FF4AY.vpk ${VITA_TITLEID} eboot.bin
   VERSION ${VITA_VERSION}
   NAME ${VITA_APP_NAME}
   FILE ${CMAKE_SOURCE_DIR}/sce_sys/icon0.png sce_sys/icon0.png
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/bg0.png sce_sys/livearea/contents/bg0.png
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
+       ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/config.png sce_sys/livearea/contents/config.png
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
-       ${CMAKE_SOURCE_DIR}/Roboto-Regular.ttf Roboto-Regular.ttf
-)
-
-add_custom_target(copy
-  COMMAND cp eboot.bin E:/app/${VITA_TITLEID}/eboot.bin
-  DEPENDS eboot.bin
-)
-
-add_custom_target(launch
-  COMMAND echo "screen on" | nc $(PSVITAIP) 1338
-  COMMAND echo "destroy" | nc $(PSVITAIP) 1338
-  COMMAND curl -T eboot.bin ftp://$(PSVITAIP):1337/ux0:/app/${VITA_TITLEID}/eboot.bin
-  COMMAND echo "launch ${VITA_TITLEID}" | nc $(PSVITAIP) 1338
-  DEPENDS eboot.bin	
+       ${CMAKE_SOURCE_DIR}/NotoSansJP-Regular.ttf NotoSansJP-Regular.ttf
+       ${CMAKE_BINARY_DIR}/companion.bin companion.bin
 )
