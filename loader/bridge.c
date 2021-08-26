@@ -420,10 +420,8 @@ static inline uint32_t utf8_decode_unsafe_4(const char *data)
 }
 
 jni_intarray *drawFont(char *word, int size, int i2, int i3) {
-  initFont();
-
   jni_intarray *texture = malloc(sizeof(jni_intarray));
-  texture->size = size * size + 5;
+  texture->size = size * size + 1;
   texture->elements = malloc(texture->size * sizeof(int));
 
   int b_w = size; /* bitmap width */
@@ -463,11 +461,6 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
   int ax;
   int lsb;
   stbtt_GetCodepointHMetrics(info, codepoint, &ax, &lsb);
-
-  if (codepoint == 32) {
-    texture->elements[0] = roundf(ax * scale);
-    return texture;
-  }
   
   /* create a bitmap for the phrase */
   unsigned char *bitmap = calloc(b_w * b_h, sizeof(unsigned char));
@@ -483,13 +476,15 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
   int byteOffset = roundf(lsb * scale) + (y * b_w);
 
   stbtt_MakeCodepointBitmap(info, bitmap + byteOffset, c_x2 - c_x1, c_y2 - c_y1, b_w, scale, scale, codepoint);
-
-  texture->elements[0] = (c_x2 - c_x1 + roundf(lsb * scale));
-  texture->elements[1] = 0;
-  texture->elements[2] = 0;
-
+  
+  if (codepoint == 32) {
+    texture->elements[0] = roundf(ax * scale);
+  } else {
+    texture->elements[0] = (c_x2 - c_x1 + roundf(lsb * scale));
+  }
+  
   for (int n = 0; n < size * size; n++) {
-    texture->elements[5 + n] = RGBA8(bitmap[n], bitmap[n], bitmap[n], bitmap[n]);
+    texture->elements[1 + n] = RGBA8(bitmap[n], bitmap[n], bitmap[n], bitmap[n]);
   }
 
   free(bitmap);
