@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
   PostFxName[0] = none_str;
   int PostFxNum = 1;
   SceIoDirent d;
-  SceUID fd = sceIoDopen("ux0:data/ff4a/shaders");
+  SceUID fd = sceIoDopen("app0:/shaders");
   while (sceIoDread(fd, &d) > 0) {
     int n;
     char name[64];
