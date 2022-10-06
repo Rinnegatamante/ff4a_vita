@@ -19,7 +19,6 @@ typedef struct {
   int lang;
   int msaa;
   int postfx;
-  int battle_fps; 
 } config_opts;
 extern config_opts options;
 

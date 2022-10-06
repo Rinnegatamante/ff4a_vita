@@ -47,21 +47,12 @@ char *LanguageName[LANGUAGES_NUM] = {
   "Russian"
 };
 
-#define BATTLE_FPS_NUM 4
-char *BattleFpsName[BATTLE_FPS_NUM] = {
-  "15",
-  "20",
-  "25",
-  "30"
-};
-
 typedef struct {
   int res;
   int bilinear;
   int lang;
   int msaa;
   int postfx;
-  int battle_fps;
 } config_opts;
 config_opts options;
 
@@ -79,7 +70,6 @@ void loadOptions() {
       else if (strcmp("language", buffer) == 0) options.lang = value;
       else if (strcmp("antialiasing", buffer) == 0) options.msaa = value;
       else if (strcmp("postfx", buffer) == 0) options.postfx = value;
-	  else if (strcmp("battle_fps", buffer) == 0) options.battle_fps = value;
     }
   } else {
     options.res = 0;
@@ -87,7 +77,6 @@ void loadOptions() {
     options.lang = 0;
     options.msaa = 2;
     options.postfx = 0;
-	options.battle_fps = 0;
   }
     
   bilinear_filter = options.bilinear ? true : false;
@@ -104,7 +93,6 @@ void saveOptions(void) {
     fprintf(config, "%s=%d\n", "language", options.lang);
     fprintf(config, "%s=%d\n", "antialiasing", options.msaa);
     fprintf(config, "%s=%d\n", "postfx", options.postfx);
-	fprintf(config, "%s=%d\n", "battle_fps", options.battle_fps);
     fclose(config);
   }
 }
@@ -115,7 +103,6 @@ char *options_descs[] = {
   "Anti-Aliasing is a technique used to reduce graphical artifacts surrounding 3D models. Greatly improves graphics quality at the cost of some GPU power.\nThe default value is: MSAA 4x.", // antialiasing
   "Language to use for the game. When Auto is used, language will be decided based on system language.\nThe default value is: Auto.", // language
   "Enables usage of a post processing effect through shaders. May impact performances.\nThe default value is: Disabled.", // postfx
-  "Alters the game framerate during battles.\nThe default value is: 15." // battle_fps
 };
 
 enum {
@@ -124,7 +111,6 @@ enum {
   OPT_ANTIALIASING,
   OPT_LANGUAGE,
   OPT_POSTFX,
-  OPT_BATTLE_FPS
 };
 
 char *desc = nullptr;
@@ -155,7 +141,7 @@ int main(int argc, char *argv[]) {
   PostFxName[0] = none_str;
   int PostFxNum = 1;
   SceIoDirent d;
-  SceUID fd = sceIoDopen("ux0:data/ff4/shaders");
+  SceUID fd = sceIoDopen("ux0:data/ff4a/shaders");
   while (sceIoDread(fd, &d) > 0) {
     int n;
     char name[64];
@@ -246,20 +232,6 @@ printf("%d\n", options.res);
       ImGui::EndCombo();
     }
     SetDescription(OPT_LANGUAGE);
-	
-	ImGui::Text("FPS in Battle:"); ImGui::SameLine();
-    if (ImGui::BeginCombo("##combo4", BattleFpsName[options.battle_fps])) {
-      for (int n = 0; n < BATTLE_FPS_NUM; n++) {
-        bool is_selected = options.battle_fps == n;
-        if (ImGui::Selectable(BattleFpsName[n], is_selected))
-          options.battle_fps = n;
-        SetDescription(OPT_BATTLE_FPS);
-        if (is_selected)
-          ImGui::SetItemDefaultFocus();
-      }
-      ImGui::EndCombo();
-    }
-    SetDescription(OPT_BATTLE_FPS);
     
     ImGui::Separator();
 

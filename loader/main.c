@@ -59,7 +59,6 @@ void loadOptions() {
       else if (strcmp("language", buffer) == 0) options.lang = value;
       else if (strcmp("antialiasing", buffer) == 0) options.msaa = value;
       else if (strcmp("postfx", buffer) == 0) options.postfx = value;
-      else if (strcmp("battle_fps", buffer) == 0) options.battle_fps = value;
     }
   } else {
     options.res = 544;
@@ -67,7 +66,6 @@ void loadOptions() {
     options.lang = 0;
     options.msaa = 2;
     options.postfx = 0;
-    options.battle_fps = 0;
   }
   
   switch (options.res) {
@@ -83,20 +81,6 @@ void loadOptions() {
     SCREEN_W = 1080;
     SCREEN_H = 1088;
     break;
-  }
-
-  switch (options.battle_fps) {
-  case 1:
-    options.battle_fps = 20;
-    break;
-  case 2:
-    options.battle_fps = 25;
-    break;
-  case 3:
-    options.battle_fps = 30;
-    break;
-  default:
-    break;  
   }
 
   if (options.lang > 5) { // Skip unsupported languages
@@ -223,8 +207,8 @@ int getKeyEvent() {
 
 enum MethodIDs {
   UNKNOWN = 0,
-  GET_CURRENT_FRAME, /**/
-  LOAD_FILE,         /**/
+  GET_CURRENT_FRAME,
+  LOAD_FILE,
   LOAD_RAW_FILE,
   GET_LANGUAGE,
   GET_SAVEFILENAME,
