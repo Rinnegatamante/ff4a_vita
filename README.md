@@ -7,6 +7,15 @@ This is a wrapper/port of *Final Fantasy 4: The After Years Android* for the *PS
 The port works by loading the official Android ARMv6 executable in memory, resolving its imports with native functions and patching it in order to properly run.
 By doing so, it's basically as if we emulate a minimalist Android environment in which we run natively the executable as is.
 
+## Known Issues
+
+- Framerate is inconsistent and, under certain circumstances it can even reach single digit numbers.
+- Models which appear or leave the scene remain in the position they'd appear or leave for all cutscenes.
+- Jumps in overmap have glitched animations.
+- When running in overmap for several seconds without interruption, model will stop being animated (only cosmetic).
+- Some overworld effects do not properly alter fullscreen tint as they should.
+- Since original Android app has no proper full controller support, physical buttons can't be used during battles and in menus.
+
 ## Setup Instructions (For End Users)
 
 In order to properly install the game, you'll have to follow these steps precisely:
@@ -81,3 +90,4 @@ cmake .. && make
 - TheFloW for the .so loader which is the core mechanism used for this port.
 - frangarcj for FF3_Vita on which this port is heavily based off.
 - Darth Bellic for the Livearea assets.
+- f2pwn for testing the homebrew extensively.
