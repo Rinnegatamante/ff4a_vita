@@ -690,14 +690,6 @@ int pthread_once_fake(volatile int *once_control, void (*init_routine)(void)) {
 
 int gettid(void) { return sceKernelGetThreadId(); }
 
-char *getcwd(char *buf, size_t size) {
-  if (buf) {
-    buf[0] = '\0';
-    return buf;
-  }
-  return NULL;
-}
-
 GLuint frag, vert, fb, fb_tex, postfx_prog;
 uint16_t *postfx_indices;
 float *postfx_texcoords, *postfx_vertices;
@@ -902,7 +894,7 @@ void *AAsset_getLength() {
   return NULL;
 }
 
-static DynLibFunction dynlib_functions[] = {
+static so_default_dynlib dynlib_functions[] = {
     {"AAssetManager_open", (uintptr_t)&AAssetManager_open},
     {"AAsset_close", (uintptr_t)&AAsset_close},
     {"AAssetManager_fromJava", (uintptr_t)&AAssetManager_fromJava},
@@ -1171,12 +1163,11 @@ int main(int argc, char *argv[]) {
 
   InitJNIEnv();
 
-  if (so_load(&ff4a_mod, SO_PATH) < 0)
+  if (so_file_load(&ff4a_mod, SO_PATH, 0x98000000) < 0)
     fatal_error("Error could not load %s.", SO_PATH);
 
   so_relocate(&ff4a_mod);
-  so_resolve(&ff4a_mod, dynlib_functions,
-             sizeof(dynlib_functions) / sizeof(DynLibFunction), 1);
+  so_resolve(&ff4a_mod, dynlib_functions, sizeof(dynlib_functions), 1);
 
   patch_game();
   so_flush_caches(&ff4a_mod);

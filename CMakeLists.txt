@@ -15,7 +15,7 @@ set(VITA_TITLEID  "FF4AY0000")
 set(VITA_VERSION  "01.00")
 set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Wl,-q,--wrap,memcpy,--wrap,memmove,--wrap,memset -Wall -O3 -mfloat-abi=softfp")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdiagnostics-color=always -g -Wl,-q,--wrap,memcpy,--wrap,memmove,--wrap,memset -Wall -O3 -mfloat-abi=softfp")
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11 -Wno-write-strings")
 
 add_executable(FF4AY.elf
@@ -34,6 +34,8 @@ target_link_libraries(FF4AY.elf
   stdc++
   vitaGL
   vitashark
+  SceShaccCgExt
+  taihen_stub
   mathneon
   kubridge_stub
   SceAppMgr_stub
@@ -52,6 +54,14 @@ target_link_libraries(FF4AY.elf
   OpenSLES
   sndfile
   SDL
+  vorbisfile
+  vorbis
+  vorbisenc
+  ogg
+  mpg123
+  mikmod
+  modplug
+  FLAC
   SceHid_stub
   z
   -Wl,--whole-archive
@@ -67,6 +77,8 @@ target_link_libraries(companion
   imgui
   vitaGL
   vitashark
+  SceShaccCgExt
+  taihen_stub
   mathneon
   SceAppMgr_stub
   SceAudio_stub

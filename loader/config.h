@@ -3,7 +3,7 @@
 
 #define LOAD_ADDRESS 0x98000000
 
-#define MEMORY_NEWLIB_MB 280
+#define MEMORY_NEWLIB_MB 192
 #define MEMORY_VITAGL_THRESHOLD_MB 8
 
 #define DATA_PATH "ux0:data/ff4a"
