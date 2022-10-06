@@ -4,7 +4,8 @@
 
 This is a wrapper/port of *Final Fantasy 4: The After Years Android* for the *PS Vita*.
 
-The port works by loading the official Android ARMv7 executable in memory, resolving its imports with native functions and patching it in order to properly run.
+The port works by loading the official Android ARMv6 executable in memory, resolving its imports with native functions and patching it in order to properly run.
+By doing so, it's basically as if we emulate a minimalist Android environment in which we run natively the executable as is.
 
 ## Setup Instructions (For End Users)
 
@@ -22,7 +23,7 @@ In order to properly install the game, you'll have to follow these steps precise
 
 - **Optional**: Install [PSVshell](https://github.com/Electry/PSVshell/releases) to overclock your device to 500Mhz.
 - Install `libshacccg.suprx`, if you don't have it already, by following [this guide](https://samilops2.gitbook.io/vita-troubleshooting-guide/shader-compiler/extract-libshacccg.suprx).
-- Obtain your copy of *Final Fantasy 4* legally from the Google Play store in form of an `.apk` file and one or more `.obb` files (usually located inside the `/sdcard/android/obb/com.square_enix.android_googleplay.FF4AY_GP/`) folder. [You can get all the required files directly from your phone](https://stackoverflow.com/questions/11012976/how-do-i-get-the-apk-of-an-installed-app-without-root-access) or by using an apk extractor you can find in the play store. The apk can be extracted with whatever Zip extractor you prefer (eg: WinZip, WinRar, etc...) since apk is basically a zip file. You can rename `.apk` to `.zip` to open them with your default zip extractor.
+- Obtain your copy of *Final Fantasy IV: The After Years* legally from the Google Play store in form of an `.apk` file and one or more `.obb` files (usually located inside the `/sdcard/android/obb/com.square_enix.android_googleplay.FF4AY_GP/`) folder. [You can get all the required files directly from your phone](https://stackoverflow.com/questions/11012976/how-do-i-get-the-apk-of-an-installed-app-without-root-access) or by using an apk extractor you can find in the play store. The apk can be extracted with whatever Zip extractor you prefer (eg: WinZip, WinRar, etc...) since apk is basically a zip file. You can rename `.apk` to `.zip` to open them with your default zip extractor.
 - Copy the `.obb` file to `ux0:data/ff4a` and rename it to `main.obb`.
 - Open the apk and extract `libff4a.so` from the `lib/armeabi` folder to `ux0:data/ff4a`.
 - Install [FF4AY.vpk](https://github.com/Rinnegatamante/ff4a_vita/releases) on your *PS Vita*.

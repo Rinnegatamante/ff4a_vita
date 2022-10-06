@@ -878,6 +878,16 @@ void *AAsset_getLength() {
   return NULL;
 }
 
+void glTexParameteriHook(GLenum target, GLenum pname, GLint param) {
+  if (options.bilinear) {
+    if (pname == GL_TEXTURE_MIN_FILTER || pname == GL_TEXTURE_MAG_FILTER){
+      glTexParameteri(target, pname, GL_LINEAR);
+      return;
+    }
+  }
+  glTexParameteri(target, pname, param);
+}
+
 static so_default_dynlib dynlib_functions[] = {
     {"AAssetManager_open", (uintptr_t)&AAssetManager_open},
     {"AAsset_close", (uintptr_t)&AAsset_close},
@@ -1025,7 +1035,7 @@ static so_default_dynlib dynlib_functions[] = {
     {"glTranslatef", (uintptr_t)&glTranslatef},
     {"glTexCoordPointer", (uintptr_t)&glTexCoordPointer},
     {"glTexImage2D", (uintptr_t)&glTexImage2D},
-    {"glTexParameteri", (uintptr_t)&glTexParameteri},
+    {"glTexParameteri", (uintptr_t)&glTexParameteriHook},
     {"glTexSubImage2D", (uintptr_t)&glTexSubImage2D},
     {"glVertexPointer", (uintptr_t)&glVertexPointer},
     {"glViewport", (uintptr_t)&glViewport},
