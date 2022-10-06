@@ -62,7 +62,7 @@ unsigned char *gzipRead(unsigned char *bArr, int *bArr_length) {
   return bArr2;
 }
 
-unsigned char *m476a(char *str, int *file_length) {
+unsigned char *m3137a(char *str, int *file_length) {
   int i;
 
   unsigned char *bArr = header;
@@ -219,10 +219,10 @@ jni_bytearray *loadFile(char *str) {
   char temp_path[512];
   int file_length;
   sprintf(temp_path, "%s.lproj/%s", lang[getCurrentLanguage()], str);
-  unsigned char *a = m476a(temp_path, &file_length);
+  unsigned char *a = m3137a(temp_path, &file_length);
   if (a == NULL) {
     sprintf(temp_path, "files/%s", str);
-    a = m476a(temp_path, &file_length);
+    a = m3137a(temp_path, &file_length);
   }
   if (a == NULL) {
     return NULL;
@@ -251,7 +251,7 @@ jni_bytearray *loadFile(char *str) {
 jni_bytearray *loadRawFile(char *str) {
 
   int file_length;
-  unsigned char *a = m476a(str, &file_length);
+  unsigned char *a = m3137a(str, &file_length);
 
   if (a == NULL) {
     return NULL;
@@ -269,7 +269,10 @@ jni_bytearray *loadSound(char *str) {
   sprintf(path, "sound/%s.akb", str);
   
   int file_length;
-  unsigned char *a = m476a(path, &file_length);
+  unsigned char *a = m3137a(path, &file_length);
+  
+  if (!a)
+    return NULL;
 
   jni_bytearray *result = malloc(sizeof(jni_bytearray));
   result->elements = a;
