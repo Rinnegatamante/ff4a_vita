@@ -10,7 +10,7 @@ endif()
 
 project(FF4AY.elf C CXX)
 include("${VITASDK}/share/vita.cmake" REQUIRED)
-set(VITA_APP_NAME "Final Fantasy IV: After Years")
+set(VITA_APP_NAME "Final Fantasy IV: The After Years")
 set(VITA_TITLEID  "FF4AY0000")
 set(VITA_VERSION  "01.00")
 set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
