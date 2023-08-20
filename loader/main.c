@@ -388,10 +388,10 @@ int CallStaticIntMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
     return 0;
   case GET_VIEW_W:
   case GET_RES_WIDTH:
-    return has_low_res ? SCREEN_W : (SCREEN_W * 2);
+    return SCREEN_W;
   case GET_VIEW_H:
   case GET_RES_HEIGHT:
-    return has_low_res ? SCREEN_H : (SCREEN_H * 2);
+    return SCREEN_H;
   case GET_DOWNLOAD_STATE:
     return 0;
   case GET_KEY_EVENT:
@@ -435,7 +435,7 @@ void GetStringUTFRegion(void *env, char *str, int start, int len, char *buf) {
 }
 
 void *GetObjectClass(void *env, const char *name) {
-  return NULL;
+  return 0xABABABAB;
 }
 
 int GetFieldID(void *env, void *clazz, const char *name, const char *sig) {
@@ -731,6 +731,11 @@ int main_thread(SceSize args, void *argp) {
     break;
   }
   
+  if (has_low_res) {
+    SCREEN_W = 960;
+	SCREEN_H = 544;
+  }
+  
   if (options.postfx) {
     glGenTextures(1, &fb_tex);
     glBindTexture(GL_TEXTURE_2D, fb_tex);
@@ -805,10 +810,28 @@ int main_thread(SceSize args, void *argp) {
   return 0;
 }
 
+char *getArchiveFilePath(void *this) {
+  return "ux0:data/ff4a/archive.bin";
+}
+
+int OS_Panic(const char *unk, int id, char const *fmt, ...) {
+  va_list list;
+  char string[512];
+
+  va_start(list, fmt);
+  vsprintf(string, fmt, list);
+  va_end(list);
+
+  printf("PANIC: %s\n", string);
+  return 0;
+}
+
 void patch_game(void) {
 #ifdef DEBUG
   hook_thumb(ff4a_mod.text_base + 0x134fea, (uintptr_t)&printf);
 #endif
+  hook_addr(so_symbol(&ff4a_mod, "_ZN18AchievementContext18getArchiveFilePathEv"), getArchiveFilePath);
+  hook_addr(so_symbol(&ff4a_mod, "_Z9OSi_PanicPKciS0_z"), OS_Panic);
 }
 
 extern void *_ZdaPv;
@@ -816,21 +839,43 @@ extern void *_ZdlPv;
 extern void *_Znaj;
 extern void *_Znwj;
 
+extern void *__aeabi_memclr;
+extern void *__aeabi_memclr4;
+extern void *__aeabi_memclr8;
+extern void *__aeabi_memcpy4;
+extern void *__aeabi_memcpy8;
+extern void *__aeabi_memmove4;
+extern void *__aeabi_memmove8;
+extern void *__aeabi_memcpy;
+extern void *__aeabi_memmove;
+extern void *__aeabi_memset;
+extern void *__aeabi_memset4;
+extern void *__aeabi_memset8;
 extern void *__aeabi_atexit;
-extern void *__aeabi_d2ulz;
-extern void *__aeabi_dcmpgt;
-extern void *__aeabi_dmul;
-extern void *__aeabi_f2d;
-extern void *__aeabi_fadd;
-extern void *__aeabi_fsub;
 extern void *__aeabi_idiv;
 extern void *__aeabi_idivmod;
-extern void *__aeabi_l2d;
-extern void *__aeabi_l2f;
 extern void *__aeabi_ldivmod;
 extern void *__aeabi_uidiv;
 extern void *__aeabi_uidivmod;
 extern void *__aeabi_uldivmod;
+extern void *__aeabi_fadd;
+extern void *__aeabi_fsub;
+extern void *__aeabi_f2d;
+extern void *__aeabi_l2d;
+extern void *__aeabi_l2f;
+extern void *__aeabi_d2uiz;
+extern void *__aeabi_d2lz;
+extern void *__aeabi_d2ulz;
+extern void *__aeabi_ui2d;
+extern void *__aeabi_ul2d;
+extern void *__aeabi_ddiv;
+extern void *__aeabi_dadd;
+extern void *__aeabi_dcmplt;
+extern void *__aeabi_dmul;
+extern void *__aeabi_dsub;
+extern void *__aeabi_dcmpge;
+extern void *__aeabi_dcmpgt;
+extern void *__aeabi_i2d;
 extern void *__cxa_atexit;
 extern void *__cxa_finalize;
 extern void *__stack_chk_fail;
@@ -888,7 +933,92 @@ void glTexParameteriHook(GLenum target, GLenum pname, GLint param) {
   glTexParameteri(target, pname, param);
 }
 
+void *sceClibMemset2(void *dst, SceSize len, int ch) {
+  return sceClibMemset(dst, ch, len);
+}
+
+void *sceClibMemclr(void *dst, SceSize len) {
+  return sceClibMemset(dst, 0, len);
+}
+
+size_t __strlen_chk(const char *s, size_t s_len) {
+  return strlen(s);
+}
+
+int __vsprintf_chk(char* dest, int flags, size_t dest_len_from_compiler, const char *format, va_list va) {
+  return vsprintf(dest, format, va);
+}
+
+void *__memmove_chk(void *dest, const void *src, size_t len, size_t dstlen) {
+  return sceClibMemmove(dest, src, len);
+}
+
+void *__memset_chk(void *dest, int val, size_t len, size_t dstlen) {
+  return sceClibMemset(dest, val, len);
+}
+
+size_t __strlcat_chk (char *dest, char *src, size_t len, size_t dstlen) {
+  return strlcat(dest, src, len);
+}
+
+size_t __strlcpy_chk (char *dest, char *src, size_t len, size_t dstlen) {
+  return strlcpy(dest, src, len);
+}
+
+char* __strchr_chk(const char* p, int ch, size_t s_len) {
+  return strchr(p, ch);
+}
+
+char *__strcat_chk(char *dest, const char *src, size_t destlen) {
+  return strcat(dest, src);
+}
+
+char *__strrchr_chk(const char *p, int ch, size_t s_len) {
+  return strrchr(p, ch);
+}
+
+char *__strcpy_chk(char *dest, const char *src, size_t destlen) {
+  return strcpy(dest, src);
+}
+
+char *__strncat_chk(char *s1, const char *s2, size_t n, size_t s1len) {
+  return strncat(s1, s2, n);
+}
+
+void *__memcpy_chk(void *dest, const void *src, size_t len, size_t destlen) {
+  return sceClibMemcpy(dest, src, len);
+}
+
+int __vsnprintf_chk(char *s, size_t maxlen, int flag, size_t slen, const char *format, va_list args) {
+  return vsnprintf(s, maxlen, format, args);
+}
+
+char *__strncpy_chk(char *dest, const char *src, size_t len, size_t dest_len) {
+  return strncpy(dest, src, len);
+}
+
+char *__strncpy_chk2(char *dst, const char *src, size_t n, size_t dest_len, size_t src_len) {
+  return strncpy(dst, src, n);
+}
+
+void sincosf(float x, float * sin, float * cos);
+
 static so_default_dynlib dynlib_functions[] = {
+    { "__memcpy_chk", (uintptr_t)&__memcpy_chk },
+    { "__memmove_chk", (uintptr_t)&__memmove_chk },
+    { "__memset_chk", (uintptr_t)&__memset_chk },
+    { "__strcat_chk", (uintptr_t)&__strcat_chk },
+    { "__strchr_chk", (uintptr_t)&__strchr_chk },
+    { "__strcpy_chk", (uintptr_t)&__strcpy_chk },
+    { "__strncpy_chk", (uintptr_t)&__strncpy_chk },
+    { "__strncpy_chk2", (uintptr_t)&__strncpy_chk2 },
+    { "__strlcat_chk", (uintptr_t)&__strlcat_chk },
+    { "__strlcpy_chk", (uintptr_t)&__strlcpy_chk },
+    { "__strlen_chk", (uintptr_t)&__strlen_chk },
+    { "__strncat_chk", (uintptr_t)&__strncat_chk },
+    { "__strrchr_chk", (uintptr_t)&__strrchr_chk },
+    { "__vsprintf_chk", (uintptr_t)&__vsprintf_chk },
+    { "__vsnprintf_chk", (uintptr_t)&__vsnprintf_chk },
     {"AAssetManager_open", (uintptr_t)&AAssetManager_open},
     {"AAsset_close", (uintptr_t)&AAsset_close},
     {"AAssetManager_fromJava", (uintptr_t)&AAssetManager_fromJava},
@@ -955,6 +1085,17 @@ static so_default_dynlib dynlib_functions[] = {
     {"_Znaj", (uintptr_t)&_Znaj},
     {"_Znwj", (uintptr_t)&_Znwj},
     {"_toupper_tab_", (uintptr_t)&_toupper_tab_},
+    {"__aeabi_memclr", (uintptr_t)&sceClibMemclr},
+    {"__aeabi_memclr4", (uintptr_t)&sceClibMemclr},
+    {"__aeabi_memclr8", (uintptr_t)&sceClibMemclr},
+    {"__aeabi_memset", (uintptr_t)&sceClibMemset2},
+    {"__aeabi_memset4", (uintptr_t)&sceClibMemset2},
+    {"__aeabi_memset8", (uintptr_t)&sceClibMemset2},
+    {"__aeabi_memmove", (uintptr_t)&sceClibMemmove},
+    {"__aeabi_memmove4", (uintptr_t)&sceClibMemmove},
+    {"__aeabi_memcpy", (uintptr_t)&sceClibMemcpy},
+    {"__aeabi_memcpy4", (uintptr_t)&sceClibMemcpy},
+    {"__aeabi_memcpy8", (uintptr_t)&sceClibMemcpy},
     {"__aeabi_atexit", (uintptr_t)&__aeabi_atexit},
     {"__aeabi_d2ulz", (uintptr_t)&__aeabi_d2ulz},
     {"__aeabi_dcmpgt", (uintptr_t)&__aeabi_dcmpgt},
@@ -979,9 +1120,9 @@ static so_default_dynlib dynlib_functions[] = {
     {"__stack_chk_fail", (uintptr_t)&__stack_chk_fail},
     {"__stack_chk_guard", (uintptr_t)&__stack_chk_guard_fake},
     {"abort", (uintptr_t)&abort},
-	{"atan", (uintptr_t)&atan},
+    {"atan", (uintptr_t)&atan},
     {"atanf", (uintptr_t)&atan},
-	{"atan2", (uintptr_t)&atan2},
+    {"atan2", (uintptr_t)&atan2},
     {"atan2f", (uintptr_t)&atan2f},
     {"atoi", (uintptr_t)&atoi},
     {"calloc", (uintptr_t)&calloc},
@@ -994,6 +1135,7 @@ static so_default_dynlib dynlib_functions[] = {
     {"floorf", (uintptr_t)&floorf},
     {"fopen", (uintptr_t)&fopen},
     {"fprintf", (uintptr_t)&fprintf},
+    {"fputc", (uintptr_t)&fputc},
     {"fread", (uintptr_t)&fread},
     {"free", (uintptr_t)&free},
     {"fseek", (uintptr_t)&fseek},
@@ -1073,6 +1215,7 @@ static so_default_dynlib dynlib_functions[] = {
     {"realloc", (uintptr_t)&realloc},
     {"sin", (uintptr_t)&sin},
     {"sinf", (uintptr_t)&sinf},
+    {"sincosf", (uintptr_t)&sincosf},
     {"slCreateEngine", (uintptr_t)&slCreateEngine},
     {"snprintf", (uintptr_t)&snprintf},
     {"srand48", (uintptr_t)&srand48},
@@ -1092,13 +1235,23 @@ static so_default_dynlib dynlib_functions[] = {
     {"strstr", (uintptr_t)&strstr},
     {"strtok", (uintptr_t)&strtok},
     {"strtod", (uintptr_t)&strtod},
+    {"strtoul", (uintptr_t)&strtoul},
+    {"strtoull", (uintptr_t)&strtoull},
+    {"strtoll", (uintptr_t)&strtoll},
     {"strtol", (uintptr_t)&strtol},
+    {"srand", (uintptr_t)&srand},
+    {"rand", (uintptr_t)&rand},
     {"tan", (uintptr_t)&tan},
     {"tanf", (uintptr_t)&tanf},
     {"time", (uintptr_t)&time},
     {"usleep", (uintptr_t)&usleep},
+    {"vfprintf", (uintptr_t)&vfprintf},
+//  {"vasprintf", (uintptr_t)&vasprintf},
     {"vsprintf", (uintptr_t)&vsprintf},
     {"vsnprintf", (uintptr_t)&vsnprintf},
+  //{"wmemmove", (uintptr_t)&wmemmove},
+  //{"wmemcpy", (uintptr_t)&wmemcpy},
+  //{"wcslen", (uintptr_t)&wcslen},
 };
 
 int check_kubridge(void) {
