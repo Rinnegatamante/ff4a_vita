@@ -749,6 +749,7 @@ int main_thread(SceSize args, void *argp) {
 	SCREEN_H = 544;
 	}
 	
+	int time_unif = -1;
 	if (options.postfx) {
 		glGenTextures(1, &fb_tex);
 		glBindTexture(GL_TEXTURE_2D, fb_tex);
@@ -777,6 +778,7 @@ int main_thread(SceSize args, void *argp) {
 		glBindAttribLocation(postfx_prog, 0, "position");
 		glBindAttribLocation(postfx_prog, 1, "texcoord");
 		glLinkProgram(postfx_prog);
+		time_unif = glGetUniformLocation(postfx_prog, "iTime");
 	}
 
 	int (*ff4a_render)(char *) =
@@ -813,6 +815,9 @@ int main_thread(SceSize args, void *argp) {
 			glEnableVertexAttribArray(1);
 			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, &postfx_pos[0]);
 			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, &postfx_texcoord[0]);
+			if (time_unif != -1) {
+				glUniform1f(time_unif, (float)sceKernelGetProcessTimeLow() / 1000000.0f);
+			}
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 			glUseProgram(0);
 			glBindFramebuffer(GL_FRAMEBUFFER, fb);
