@@ -9,4 +9,6 @@ int get_msg_dialog_result(void);
 
 void fatal_error(const char *fmt, ...) __attribute__((noreturn));
 
+void warning(const char *msg);
+
 #endif

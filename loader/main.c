@@ -42,6 +42,7 @@
 #include "dialog.h"
 #include "main.h"
 #include "so_util.h"
+#include "trophies.h"
 
 int SCREEN_W = DEF_SCREEN_W;
 int SCREEN_H = DEF_SCREEN_H;
@@ -232,6 +233,7 @@ enum MethodIDs {
 	LOAD_SOUND,
 	GET_SAVE_DATA_PATH,
 	GET_DOWNLOAD_STATE,
+	CREATE_ACHIEVE_FILE
 } MethodIDs;
 
 typedef struct {
@@ -240,37 +242,37 @@ typedef struct {
 } NameToMethodID;
 
 static NameToMethodID name_to_method_ids[] = {
-		{"getCurrentFrame", GET_CURRENT_FRAME},
-		{"loadFile", LOAD_FILE},
-		{"loadRawFile", LOAD_RAW_FILE},
-		{"getLanguage", GET_LANGUAGE},
-		{"getSaveFileName", GET_SAVEFILENAME},
-		{"createSaveFile", CREATE_SAVEFILE},
-		{"loadTexture", LOAD_TEXTURE},
-		{"isDeviceAndroidTV", IS_DEVICE_ANDROID_TV},
-		{"drawFont", DRAW_FONT},
-		{"createEditText", CREATE_EDIT_TEXT},
-		{"getEditText", GET_EDIT_TEXT},
-		{"getResWidth", GET_RES_WIDTH},
-		{"getResHeight", GET_RES_HEIGHT},
-		{"getViewPosX", GET_VIEW_X},
-		{"getViewPosY", GET_VIEW_Y},
-		{"getViewWidth", GET_VIEW_W},
-		{"getViewHeight", GET_VIEW_H},
-		{"updateViewportSize", UPDATE_VIEWPORT_SIZE},
-		{"setFPS", SET_FPS},
-		{"isOKAchievement", IS_OK_ACHIEVEMENT},
-		{"getKeyEvent", GET_KEY_EVENT},
-		{"loadSound", LOAD_SOUND},
-		{"getSaveDataPath", GET_SAVE_DATA_PATH},
-		{"getDownloadState", GET_DOWNLOAD_STATE},
-		{"getStoragePath", GET_SAVEFILENAME}, // We use same path
+	{"getCurrentFrame", GET_CURRENT_FRAME},
+	{"loadFile", LOAD_FILE},
+	{"loadRawFile", LOAD_RAW_FILE},
+	{"getLanguage", GET_LANGUAGE},
+	{"getSaveFileName", GET_SAVEFILENAME},
+	{"createSaveFile", CREATE_SAVEFILE},
+	{"loadTexture", LOAD_TEXTURE},
+	{"isDeviceAndroidTV", IS_DEVICE_ANDROID_TV},
+	{"drawFont", DRAW_FONT},
+	{"createEditText", CREATE_EDIT_TEXT},
+	{"getEditText", GET_EDIT_TEXT},
+	{"getResWidth", GET_RES_WIDTH},
+	{"getResHeight", GET_RES_HEIGHT},
+	{"getViewPosX", GET_VIEW_X},
+	{"getViewPosY", GET_VIEW_Y},
+	{"getViewWidth", GET_VIEW_W},
+	{"getViewHeight", GET_VIEW_H},
+	{"updateViewportSize", UPDATE_VIEWPORT_SIZE},
+	{"setFPS", SET_FPS},
+	{"isOKAchievement", IS_OK_ACHIEVEMENT},
+	{"getKeyEvent", GET_KEY_EVENT},
+	{"loadSound", LOAD_SOUND},
+	{"getSaveDataPath", GET_SAVE_DATA_PATH},
+	{"getDownloadState", GET_DOWNLOAD_STATE},
+	{"getStoragePath", GET_SAVEFILENAME}, // We use same path
+	{"createAchieveFile", CREATE_ACHIEVE_FILE},
 };
 
 int GetMethodID(void *env, void *class, const char *name, const char *sig) {
 
-	for (int i = 0; i < sizeof(name_to_method_ids) / sizeof(NameToMethodID);
-			 i++) {
+	for (int i = 0; i < sizeof(name_to_method_ids) / sizeof(NameToMethodID); i++) {
 		if (strcmp(name, name_to_method_ids[i].name) == 0)
 			return name_to_method_ids[i].id;
 	}
@@ -281,8 +283,7 @@ int GetMethodID(void *env, void *class, const char *name, const char *sig) {
 int GetStaticMethodID(void *env, void *class, const char *name,
 											const char *sig) {
 
-	for (int i = 0; i < sizeof(name_to_method_ids) / sizeof(NameToMethodID);
-			 i++) {
+	for (int i = 0; i < sizeof(name_to_method_ids) / sizeof(NameToMethodID); i++) {
 		if (strcmp(name, name_to_method_ids[i].name) == 0)
 			return name_to_method_ids[i].id;
 	}
@@ -340,8 +341,8 @@ void *CallStaticObjectMethodV(void *env, void *obj, int methodID,
 	}
 }
 
-void CallStaticVoidMethodV(void *env, void *obj, int methodID,
-													 uintptr_t *args) {
+void CallStaticVoidMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
+	FILE *f;
 	switch (methodID) {
 	case CREATE_SAVEFILE:
 		createSaveFile((size_t)args[0]);
@@ -354,6 +355,9 @@ void CallStaticVoidMethodV(void *env, void *obj, int methodID,
 		break;
 	case SET_FPS:
 		setFPS((int32_t)args[0]);
+		break;
+	case CREATE_ACHIEVE_FILE:
+		createAchieveFile((size_t)args[0]);
 		break;
 	default:
 		return;
@@ -744,9 +748,18 @@ int main_thread(SceSize args, void *argp) {
 		break;
 	}
 	
+	// Initing trophy system
+	SceIoStat st;
+	int r = trophies_init();
+	if (r < 0 && sceIoGetstat(TROPHIES_FILE, &st) < 0) {
+		FILE *f = fopen(TROPHIES_FILE, "w");
+		fclose(f);
+		warning("This game features unlockable trophies but NoTrpDrm is not installed. If you want to be able to unlock trophies, please install it.");
+	}
+	
 	if (has_low_res) {
 		SCREEN_W = 960;
-	SCREEN_H = 544;
+		SCREEN_H = 544;
 	}
 	
 	int time_unif = -1;
@@ -829,7 +842,7 @@ int main_thread(SceSize args, void *argp) {
 }
 
 char *getArchiveFilePath(void *this) {
-	return "ux0:data/ff4a/archive.bin";
+	return "ux0:data/ff4a/report_achi.bin";
 }
 
 int OS_Panic(const char *unk, int id, char const *fmt, ...) {
@@ -844,12 +857,24 @@ int OS_Panic(const char *unk, int id, char const *fmt, ...) {
 	return 0;
 }
 
+so_hook achi_fnc;
+int addArchiveReportArray(void *this, char *id, float progress) {
+	if (progress == 100.0f) {
+		int trp_id = atoi(&id[33]);
+		if (trp_id < 50) {
+			trophies_unlock(atoi(&id[33]));
+		}
+	}
+	return SO_CONTINUE(int, achi_fnc, this, id, progress);
+}
+
 void patch_game(void) {
 #ifdef DEBUG
 	hook_thumb(ff4a_mod.text_base + 0x134fea, (uintptr_t)&printf);
 #endif
 	hook_addr(so_symbol(&ff4a_mod, "_ZN18AchievementContext18getArchiveFilePathEv"), getArchiveFilePath);
 	hook_addr(so_symbol(&ff4a_mod, "_Z9OSi_PanicPKciS0_z"), OS_Panic);
+	achi_fnc = hook_addr(so_symbol(&ff4a_mod, "_ZN18AchievementContext21addArchiveReportArrayEPcf"), addArchiveReportArray);
 }
 
 extern void *_ZdaPv;

@@ -314,6 +314,14 @@ void createSaveFile(size_t size) {
 	free(buffer);
 }
 
+void createAchieveFile(size_t size) {
+	char *buffer = malloc(size);
+	FILE *fd = fopen(SAVE_FILENAME "/report_achi.bin", "wb");
+	fwrite(buffer, sizeof(char), size, fd);
+	fclose(fd);
+	free(buffer);
+}
+
 uint64_t j3 = 0;
 int32_t framerate = 30;
 
@@ -435,14 +443,12 @@ jni_intarray *drawFont(char *word, int size, int i2, int i3) {
 	int ascent, descent, lineGap;
 	stbtt_GetFontVMetrics(info, &ascent, &descent, &lineGap);
 
-	printf("word: %s\n", word);
 	int i = 0;
 	while (word[i]) {
 		i++;
 		if (i == 4)
 			break;
 	}
-	printf("i is %d\n", i);
 	
 	uint32_t codepoint;
 	switch (i) {

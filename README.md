@@ -11,6 +11,25 @@ By doing so, it's basically as if we emulate a minimalist Android environment in
 
 This port (potentially) works with all versions of the game although, it's <b>HIGHLY RECOMMENDED</b> to use the ARMv7 build from v.1.0.10 or later since it's the first version offering an ARMv7 build (which is faster than ARMv6 builds from older versions) and also introduced multithreading making the game run DRASTICALLY faster on PSVita.
 
+## Changelog
+### v1.0
+
+- Fixed a bug causing wrong language if Portuguese or Russian were selected in the companion app.
+- Added Simplified Chinese language support.
+- Added Traditional Chinese language support.
+- Added Korean language support.
+- Added CRT PostFX effect.
+- Added trophies support.
+
+### v0.9
+
+- Added support for v.1.0.10 executable (offering better widescreen support and an HUGE performance boost).
+- Updated to latest vitaGL commit.
+
+### v0.8
+
+- Initial Release.
+
 ## Known Issues
 
 - Models which appear or leave the scene remain in the position they'd appear or leave for all cutscenes.
@@ -39,6 +58,7 @@ In order to properly install the game, you'll have to follow these steps precise
 - Copy the `.obb` file to `ux0:data/ff4a` and rename it to `main.obb`.
 - Open the apk and extract `libff4a.so` from the `lib/armeabi-v7a` (or `lib/armeabi` if using a NOT RECOMMENDED older version) folder to `ux0:data/ff4a`.
 - Install [FF4AY.vpk](https://github.com/Rinnegatamante/ff4a_vita/releases) on your *PS Vita*.
+- **Optional**: For trophies to be unlockable, install [NoTrpDRM](https://github.com/Rinnegatamante/NoTrpDrm).
 
 ## Build Instructions (For Developers)
 

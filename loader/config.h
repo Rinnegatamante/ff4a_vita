@@ -9,6 +9,7 @@
 #define DATA_PATH "ux0:data/ff4a"
 #define SO_PATH DATA_PATH "/" "libff4a.so"
 #define CONFIG_FILE_PATH "ux0:data/ff4a/options.cfg"
+#define TROPHIES_FILE "ux0:data/ff4a/trophies.chk"
 
 #define DEF_SCREEN_W 960
 #define DEF_SCREEN_H 544
