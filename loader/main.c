@@ -757,6 +757,8 @@ int main_thread(SceSize args, void *argp) {
 		warning("This game features unlockable trophies but NoTrpDrm is not installed. If you want to be able to unlock trophies, please install it.");
 	}
 	
+	sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
+	
 	if (has_low_res) {
 		SCREEN_W = 960;
 		SCREEN_H = 544;
@@ -1332,9 +1334,7 @@ int main(int argc, char *argv[]) {
 
 	loadOptions();
 	//sceSysmoduleLoadModule(9); // Razor Capture
-	sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
-	sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT,
-													 SCE_TOUCH_SAMPLING_STATE_START);
+	sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
 
 	//SceUID crasher_thread = sceKernelCreateThread("crasher", crasher, 0x40, 0x1000, 0, 0, NULL);
 	//sceKernelStartThread(crasher_thread, 0, NULL);
