@@ -862,7 +862,7 @@ int addArchiveReportArray(void *this, char *id, float progress) {
 	if (progress == 100.0f) {
 		int trp_id = atoi(&id[33]);
 		if (trp_id < 50) {
-			trophies_unlock(atoi(&id[33]));
+			trophies_unlock(trp_id);
 		}
 	}
 	return SO_CONTINUE(int, achi_fnc, this, id, progress);
