@@ -12,6 +12,10 @@ By doing so, it's basically as if we emulate a minimalist Android environment in
 This port (potentially) works with all versions of the game although, it's <b>HIGHLY RECOMMENDED</b> to use the ARMv7 build from v.1.0.10 or later since it's the first version offering an ARMv7 build (which is faster than ARMv6 builds from older versions) and also introduced multithreading making the game run DRASTICALLY faster on PSVita.
 
 ## Changelog
+### v1.0.1
+
+- Updated trophies icons to hi-res versions.
+
 ### v1.0
 
 - Fixed a bug causing wrong language if Portuguese or Russian were selected in the companion app.
