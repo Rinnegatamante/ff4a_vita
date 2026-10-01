@@ -17,6 +17,7 @@ jni_bytearray *getSaveDataPath();
 uint8_t isSoundFileExist(char *str);
 void setFPS(int32_t i);
 void createSaveFile(size_t size);
+void createAchieveFile(size_t size);
 uint64_t getCurrentFrame(uint64_t j);
 int readHeader();
 
@@ -31,7 +32,7 @@ jni_intarray *drawFont(char *str, int i, int i2, int i3);
 
 void createEditText(char *str);
 char *getEditText();
-void initFont();
+void initFont(const char *fname);
 
 int getCurrentLanguage();
 

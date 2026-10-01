@@ -8,6 +8,9 @@
 
 #include <kubridge.h>
 #include <psp2/apputil.h>
+#include <psp2/appmgr.h>
+#include <psp2/io/stat.h>
+#include <psp2/kernel/processmgr.h>
 #include <psp2/audioout.h>
 #include <psp2/ctrl.h>
 #include <psp2/io/dirent.h>
@@ -440,7 +443,7 @@ void GetStringUTFRegion(void *env, char *str, int start, int len, char *buf) {
 }
 
 void *GetObjectClass(void *env, const char *name) {
-	return 0xABABABAB;
+	return (void *)(uintptr_t)0xABABABAB;
 }
 
 int GetFieldID(void *env, void *clazz, const char *name, const char *sig) {
@@ -695,7 +698,8 @@ void loadShader(int is_vertex, char *file) {
 
 	GLint len = st.st_size - 1;
 	GLuint shad = is_vertex ? vert : frag;
-	glShaderSource(shad, 1, &code, &len);
+	const GLchar *shader_code = code;
+	glShaderSource(shad, 1, &shader_code, &len);
 	glCompileShader(shad);
 
 	free(code);
@@ -874,9 +878,9 @@ void patch_game(void) {
 #ifdef DEBUG
 	hook_thumb(ff4a_mod.text_base + 0x134fea, (uintptr_t)&printf);
 #endif
-	hook_addr(so_symbol(&ff4a_mod, "_ZN18AchievementContext18getArchiveFilePathEv"), getArchiveFilePath);
-	hook_addr(so_symbol(&ff4a_mod, "_Z9OSi_PanicPKciS0_z"), OS_Panic);
-	achi_fnc = hook_addr(so_symbol(&ff4a_mod, "_ZN18AchievementContext21addArchiveReportArrayEPcf"), addArchiveReportArray);
+	hook_addr(so_symbol(&ff4a_mod, "_ZN18AchievementContext18getArchiveFilePathEv"), (uintptr_t)getArchiveFilePath);
+	hook_addr(so_symbol(&ff4a_mod, "_Z9OSi_PanicPKciS0_z"), (uintptr_t)OS_Panic);
+	achi_fnc = hook_addr(so_symbol(&ff4a_mod, "_ZN18AchievementContext21addArchiveReportArrayEPcf"), (uintptr_t)addArchiveReportArray);
 }
 
 extern void *_ZdaPv;
